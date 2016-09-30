@@ -48,7 +48,7 @@ for each in hosts:
 """
 Bootstrap prereqs
 """
-# The only different between the types is the repo subscription that is ran
+# The only difference between the types is the repo subscription that is ran
 # depending on the type installed
 if args.type == 'mon' or args.type == 'osd' or args.type == 'rgw':
     raise NameError('The --type provided is invalid')
