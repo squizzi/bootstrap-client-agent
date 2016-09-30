@@ -104,7 +104,7 @@ bootstrapCommand = 'yum update -y ; systemctl start ntpd ; curl {0}:8181/setup/a
 # Reopen the ssh connection so we can connect to each host in the lineup
 ssh.close()
 for each in host_list:
-    print "> Setting up host {0}".format(each)
+    print "\n> Setting up host {0}".format(each)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(each,
@@ -115,7 +115,7 @@ for each in host_list:
     stdin, stdout, stderr = ssh.exec_command(bootstrapCommand)
     exit_status = stdout.channel.recv_exit_status()
     if exit_status == 0:
-        print "\n[COMPLETE] The client agent has been installed and configured but may take a few moments to appear in the Red Hat Storage Console web interface"
+        print "[COMPLETE] The client agent has been installed and configured but may take a few moments to appear in the Red Hat Storage Console web interface"
     else:
         print "\n[ERROR] during bootstrap of host {0}. {1}".format(each, exit_status)
         client.close()
