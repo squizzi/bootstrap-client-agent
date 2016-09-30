@@ -85,9 +85,7 @@ else:
 Bootstrap client agent(s)
 """
 bootstrapCommand = 'yum update -y ; systemctl start ntpd ; curl https://ceph1.hq.gsslab.rdu.redhat.com:8181/setup/agent | bash'
-stdin, stdout, stderr = ssh.exec_command(reposHosts)
-# Wait for the register commands to run before continuing
-# to prevent problems during build_playbook()
+stdin, stdout, stderr = ssh.exec_command(bootstrapCommand)
 exit_status = stdout.channel.recv_exit_status()
 if exit_status == 0:
     pass
