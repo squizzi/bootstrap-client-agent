@@ -99,7 +99,10 @@ else:
 """
 Bootstrap client agent(s)
 """
-print "Beginning bootstrapping process...  Updating each client with yum, starting ntpd and running setup agent.  This may take a few moments to complete..."
+print(
+"""Beginning bootstrapping process...  Updating each client with yum, starting
+ntpd and running setup agent.  This may take a few moments to complete..."""
+)
 bootstrapCommand = 'yum update -y ; systemctl start ntpd ; curl {0}:8181/setup/agent | bash'.format(server)
 stdin, stdout, stderr = ssh.exec_command(bootstrapCommand)
 exit_status = stdout.channel.recv_exit_status()
