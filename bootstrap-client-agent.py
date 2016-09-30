@@ -48,18 +48,18 @@ try:
     host_list = set(args.host.split(","))
     for each in host_list:
         if is_valid_hostname(each) == False:
-            print "[ERROR] The provided host: {0} does not appear to be a valid FQDN or IP address.".format(each)
+            print "\n[ERROR] The provided host: {0} does not appear to be a valid FQDN or IP address.".format(each)
             sys.exit(1)
 except AttributeError:
     host_list = args.host
     if is_valid_hostname(host_list) == False:
-        print "[ERROR] The provided host: {0} does not appear to be a valid FQDN or IP address.".format(host_list)
+        print "\n[ERROR] The provided host: {0} does not appear to be a valid FQDN or IP address.".format(host_list)
         sys.exit(1)
 
 # Run host check on the server seperately:
 server = args.server
 if is_valid_hostname(server) == False:
-    print "[ERROR] The provided server: {0} does not appear to be a valid FQDN or IP address.".format(server)
+    print "\n[ERROR] The provided server: {0} does not appear to be a valid FQDN or IP address.".format(server)
     sys.exit(1)
 
 """
@@ -85,34 +85,38 @@ for each in host_list:
                 password=rootPassword,
                 look_for_keys=False
                 )
-stdin, stdout, stderr = ssh.exec_command(reposHosts)
-# Wait for the subscription-manager commands to run
-exit_status = stdout.channel.recv_exit_status()
-if exit_status == 0:
-    print "> Subscribed host {0} to valid repositories".format(each)
-    pass
-else:
-    print "[ERROR] subscribing host {0} to agent repositories. {1}".format(each, exit_status)
-    client.close()
-    sys.exit(1)
+    stdin, stdout, stderr = ssh.exec_command(reposHosts)
+    # Wait for the subscription-manager commands to run
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status == 0:
+        print "> Subscribed host {0} to valid repositories".format(each)
+        pass
+    else:
+        print "\n[ERROR] subscribing host {0} to agent repositories. {1}".format(each, exit_status)
+        ssh.close()
+        sys.exit(1)
 
 """
 Bootstrap client agent(s)
 """
-print(
-"""> Beginning bootstrapping process...  Updating each client with yum, starting
-ntpd and running setup agent.  This may take a few moments to complete..."""
-)
+print "> Beginning bootstrapping process: Updating each client with yum, starting ntpd and running setup agent.  This may take a few moments to complete..."
 bootstrapCommand = 'yum update -y ; systemctl start ntpd ; curl {0}:8181/setup/agent | bash'.format(server)
-stdin, stdout, stderr = ssh.exec_command(bootstrapCommand)
-exit_status = stdout.channel.recv_exit_status()
-if exit_status == 0:
-    print(
-"""[COMPLETE] The client agent has been installed and configured but may take a few moments
-to appear in the Red Hat Storage Console web interface"""
-    )
-    pass
-else:
-    print "[ERROR] during bootstrap of host {0}. {1}".format(each, exit_status)
-    client.close()
-    sys.exit(1)
+# Reopen the ssh connection so we can connect to each host in the lineup
+ssh.close()
+for each in host_list:
+    print "> Setting up host {0}".format(each)
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(each,
+                username="root",
+                password=rootPassword,
+                look_for_keys=False
+                )
+    stdin, stdout, stderr = ssh.exec_command(bootstrapCommand)
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status == 0:
+        print "\n[COMPLETE] The client agent has been installed and configured but may take a few moments to appear in the Red Hat Storage Console web interface"
+    else:
+        print "\n[ERROR] during bootstrap of host {0}. {1}".format(each, exit_status)
+        client.close()
+        sys.exit(1)
